@@ -6,7 +6,7 @@
 import numpy as np
 import operator
 from models.SecurityAnalysis import security_analysis
-from models.FilteringEnv_testDataParams import FilteringEnv_testDataParams
+from models.FilteringEnv_testDataParams import FilteringEnv
 
 class BaselineAgent:
     # agent that runs Baseline filtering
