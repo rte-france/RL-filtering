@@ -1,5 +1,10 @@
+# Copyright (c) 2024, RTE (https://www.rte-france.com)
+# See AUTHORS.txt
+# SPDX-License-Identifier: MPL-2.0
+# This file is part of RL-filtering, a project for bid filtering in European balancing platforms.
+
 from sb3_contrib import TQC
-from models.FilteringEnv_testDataParams import FilteringEnv_testDataParams
+from models.FilteringEnv import FilteringEnv
 
 class DoNothingAgent:
     # agent that does not filter -> price delta is null
