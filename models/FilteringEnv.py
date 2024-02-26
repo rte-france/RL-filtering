@@ -31,7 +31,7 @@ END_DATE = datetime.strptime("30/12/2020 23:00:00", '%d/%m/%Y %H:%M:%S')
 import warnings
 warnings.filterwarnings("ignore")
 
-class FilteringEnv_testDataParams(gym.Env):
+class FilteringEnv(gym.Env):
     def __init__(self,
                  nb_bid_max=42,
                  name_g2op_env="ieee_96_marie",
