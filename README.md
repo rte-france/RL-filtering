@@ -7,6 +7,7 @@ The Train_RLfiltering file can be used to train a Proposed filtering agent. Main
 
 
 *References*
+
 [1] Girod, M., Donnot, B., Dussartre, V., Terrier, V., Bourmaud, J. Y., & Perez, Y. (2024). Bid filtering for congestion management in European balancing markets–A reinforcement learning approach. Applied Energy, 361, 122892
 
 [2] Barrows, C., Bloom, A., Ehlen, A., Ikäheimo, J., Jorgenson, J., Krishnamurthy, D., ... & Watson, J. P. (2019). The IEEE reliability test system: A proposed 2019 update. IEEE Transactions on Power Systems, 35(1), 119-127.
