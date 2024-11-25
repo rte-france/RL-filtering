@@ -35,7 +35,7 @@ class FilteringEnv(gym.Env):
     def __init__(self,
                  nb_bid_max=42,
                  name_g2op_env="ieee_96_marie",
-                 ts_path="C:/Users/girodmar/data_grid2op/ieee_96_marie/raw_data/timeseries/",
+                 ts_path="ieee_96_marie/raw_data/timeseries/",
                  path_data="data",
                  atc = "_02022023_noPmin.csv",
                  bid_file = "all_bids_grouped.csv",
@@ -70,14 +70,14 @@ class FilteringEnv(gym.Env):
             reader = csv.reader(f, delimiter=";")
             self.bid_correspondance = {int(rows[0]): rows[1] for rows in reader}
         self.no_redispatch_gen = pd.read_csv(path_data+"/no_redispatch_gens.csv")["no_redispatch_gen"].values.tolist()
-
         self.not_grouped = pd.read_csv(path_data+'/'+not_grouped_file, sep=";")
         gens = pd.DataFrame(columns=self.gen_correspondance.keys(), index = self.not_grouped["CurrentStep"].unique())
         self.no_bid_gens = pd.DataFrame(columns=self.gen_correspondance.keys())
         for index, row in gens.iterrows():
             new_row = pd.Series(gens.columns.isin(self.not_grouped[self.not_grouped["CurrentStep"]==index].GenName).astype(int),gens.columns)
-            new_row.name = int(index)
-            self.no_bid_gens = self.no_bid_gens.append(new_row)
+            #new_row.name = int(index)
+            #print(pd.DataFrame(new_row))
+            self.no_bid_gens.loc[int(index)] = new_row
         self.no_bid_gens.rename(columns=self.gen_correspondance, inplace=True)
 
         self.prod_ts = pd.read_csv(ts_path+"prod_df.csv", sep=";")
@@ -113,7 +113,7 @@ class FilteringEnv(gym.Env):
         self.action_space = Box(low=-1, high=1, shape=(self._nb_bid_max, ))
         self.observation_space = Box(low= -1.2, high= 1.2,
                                      shape=(self._grid2op_env.n_line +
-                                            self._nb_bid_max, ), dtype = np.float32)
+                                            self._nb_bid_max+ 2*len(borders_list),), dtype = np.float32)
         self.cumu_reward = 0
         self.cumu_step = 0
 
@@ -205,15 +205,15 @@ class FilteringEnv(gym.Env):
         #read data
         pmax_data = self.pmax_ts[self.pmax_ts["step"] == self.current_step]
         pmax_data.rename(columns=self.gen_correspondance, inplace=True)
-        pmax_dict = pmax_data.drop(["date","step"], axis=1).to_dict('r')[0]
+        pmax_dict = pmax_data.drop(["date","step"], axis=1).to_dict('records')[0]
 
         prod_data = self.prod_ts[self.prod_ts["step"] == self.current_step]
         prod_data.rename(columns=self.gen_correspondance, inplace=True)
-        prod_dict = prod_data.drop(["date","step"], axis=1).to_dict('r')[0]
+        prod_dict = prod_data.drop(["date","step"], axis=1).to_dict('records')[0]
 
         load_data = self.load_ts[self.load_ts["step"] == self.current_step]
         load_data.rename(columns=self.load_correspondance, inplace=True)
-        load_dict_int = load_data.drop(["date","step"], axis=1).to_dict('r')[0]
+        load_dict_int = load_data.drop(["date","step"], axis=1).to_dict('records')[0]
 
         #format
         load_dict = {k: v for k, v in load_dict_int.items() if v > 0}
@@ -238,13 +238,12 @@ class FilteringEnv(gym.Env):
         if not self.bids_grouped: #for baseline filtering
             bid_gen = [bid.gen_id for bid in bids]
 
-        #atc = [np.float32(border.max_flow/border.max_capacity) for border in self.borders] + [np.float32(border.min_flow/border.max_capacity) for border in self.borders]
-
+        atc = [np.float32(border.max_flow/border.max_capacity) for border in self.borders] + [np.float32(border.min_flow/border.max_capacity) for border in self.borders]
         if not self.bids_grouped: #baseline filtering
             return np.concatenate((grid2op_obs.p_or, grid2op_obs.gen_p, list(self.gen_pmax.values()),grid2op_obs.load_p,
                                    bid_price,bid_qmax, bid_isSell, bid_gen), axis=0)
         else:
-            return np.concatenate((grid2op_obs.p_or/np.array(self.thermal_limits), bid_qmax), axis=0)
+            return np.concatenate((grid2op_obs.p_or/np.array(self.thermal_limits), atc, bid_qmax), axis=0)
 
     def step(self, action):
 
@@ -374,7 +373,6 @@ class FilteringEnv(gym.Env):
         gen_slack = self.gen_p.copy()
         for gen_id in range(len(self.gen_p)):
             gen_slack[gen_id] += delta_slack*self.gen_pmax[gen_id]/sum_pmax
-
         # update grid2op_env
         grid2op_act = self._grid2op_env.action_space({"injection": {"load_p": load_p,
                                                                     "prod_p": gen_slack}})

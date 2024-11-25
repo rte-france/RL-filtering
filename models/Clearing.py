@@ -10,9 +10,9 @@ def Clearing(zones, borders):
     #runs the market clearing
 
     xp.setOutputEnabled(False)
-    # xp.controls.outputlog = 0
+
     clearing = xp.problem("Clearing")
-    clearing.setControl({'presolve': True, 'threads': 1, 'outputlog': 0, 'lpthreads': 0, 'mipthreads': 0})
+    clearing.setControl({'presolve': True, 'threads': 1, 'outputlog': 0, 'concurrentthreads': 0, 'mipthreads': 0})
 
     all_bids = {}
     for zone in zones:

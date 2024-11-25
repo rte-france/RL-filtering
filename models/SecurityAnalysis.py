@@ -18,7 +18,7 @@ def security_analysis(env, thermal_limits, gen_pmax, gen_p, no_redispatch_gen, c
     trafo_delta = len(lines) #index offset for trafos - they are treated separately as they have different attributes
 
     sa = xp.problem("Security Analysis")
-    sa.setControl({'presolve': True, 'threads': 1, 'outputlog': 0, 'lpthreads': 0, 'mipthreads': 0})
+    sa.setControl({'presolve': True, 'threads': 1, 'outputlog': 0, 'concurrentthreads': 0, 'mipthreads': 0})
 
     #defining variables
     va_bus = {i: xp.var(name="va_" + str(i), lb=-xp.infinity, vartype=xp.continuous) for i in range(grid.nb_bus())}
@@ -177,9 +177,10 @@ def security_analysis(env, thermal_limits, gen_pmax, gen_p, no_redispatch_gen, c
         (backend.gen_cost_per_MW[gen.id]) * dpgp_gen[gen.id] - (180 - backend.gen_cost_per_MW[gen.id]) * dpgn_gen[
             gen.id] for gen in gens)
                     + 33000 * (xp.Sum(loadShedding[load.id] for load in loads)) + 32990 * (penalize_vol - max_vol)
-                    + 0.01 * xp.Sum( #avoid netting with no added value
-        backend.gen_cost_per_MW[gen.id] * (sa.getSolution(dpgp_gen)[gen.id] + sa.getSolution(dpgn_gen)[gen.id]) for gen
-        in gens), sense=xp.minimize)
+                    + 0.01 * xp.Sum(  # avoid netting with no added value
+        backend.gen_cost_per_MW[gen.id] * (dpgp_gen[gen.id] + dpgn_gen[gen.id]) for gen in gens)
+        , sense=xp.minimize)
+
     sa.solve()
 
     if sa.getProbStatusString() == "lp_infeas":

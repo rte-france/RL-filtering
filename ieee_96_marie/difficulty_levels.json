@@ -1,0 +1,6 @@
+{
+    "competition": {
+      "ENV_DC":  true,
+	"NO_OVERFLOW_DISCONNECTION": true
+    }
+}

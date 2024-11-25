@@ -15,7 +15,7 @@ class DoNothingAgent:
 
     def predict(self, obs, deterministic):
         delta = [0]*self._nb_bid_max
-        return delta
+        return delta, []
 
 def evaluate(env, model):
     #evaluate Do Nothing or Proposed filtering agent over 52 weeks
@@ -28,12 +28,13 @@ def evaluate(env, model):
             action, _states = model.predict(obs, deterministic=True)
             obs, reward, done, info = env.step(action)
             sum_reward += reward
+        print("reward", sum_reward)
     print("total reward", sum_reward)
 
 
 if __name__=='__main__':
-    mode = "DoNothing" #"ProposedFiltering"
-    env = FilteringEnv_testDataParams(max_vol=200) #max redispatch volume
+    mode = "ProposedFiltering" #"DoNothing"
+    env = FilteringEnv(max_vol=200) #max redispatch volume
 
     if mode == "DoNothing":
         model = DoNothingAgent(env)

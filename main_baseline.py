@@ -6,7 +6,7 @@
 import numpy as np
 import operator
 from models.SecurityAnalysis import security_analysis
-from models.FilteringEnv_testDataParams import FilteringEnv
+from models.FilteringEnv import FilteringEnv
 
 class BaselineAgent:
     # agent that runs Baseline filtering
@@ -85,12 +85,11 @@ class BaselineAgent:
 
         # run security analysis on network to have a secure base case and update grid2op network
         gen_p_sa = security_analysis(self._grid2op_env, self._thermal_limits, gen_pmax, gen_p, [],
-                                     self.contingencies, mode="basecase")
+                                     self.contingencies, max_vol = 10000 ,mode="basecase")
         gen_p_sa = np.array(gen_p_sa)
         grid2op_act = self._grid2op_env.action_space({"injection": {"load_p": load_p,
                                                                     "prod_p": gen_p_sa}})
         obs, *_ = self._grid2op_env.step(grid2op_act)
-
 
         # step 3: test upward and downward bids separately in merit order
         gen_with_bid_up = gen_p_sa
@@ -110,6 +109,7 @@ class BaselineAgent:
 
             up_price = 9999 #~infinite price
             self._n_1_sa(obs, bid, nb_lines, up_price) #check if the network is secure with added bid
+
 
         for bid in reversed(bid_sorted_down):
             gen_with_bid_down[int(bid[3])] -= bid[1]
@@ -136,7 +136,7 @@ class BaselineAgent:
 
 if __name__ == "__main__":
 
-    env = FilteringEnv_testDataParams(bid_file="all_bids.csv", #testing data set bids - testing network by default
+    env = FilteringEnv(bid_file="all_bids.csv", #testing data set bids - testing network by default
                                       max_vol=200, #max allowed redispatch volume
                                       bids_grouped=False)
     agent = BaselineAgent(env)
@@ -153,4 +153,5 @@ if __name__ == "__main__":
             action = agent.act(obs, reward, done)
             obs, reward, done, info = env.step(action)
             sum_reward += reward
+        print("reward", reward)
     print("total reward", sum_reward)
